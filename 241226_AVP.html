@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVP</title>
+    <style>
+        @font-face {
+            font-family: 'AyarKasone';
+            src: url('Fonts/ayar_kasone.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* Общие стили для всех элементов */
+        * {
+            margin: 0;
+            padding: 0;
+            text-indent: 0;
+            text-transform: uppercase; /* Все элементы в верхнем регистре */
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #ff7e00, #ff003c);
+            font-family: 'AyarKasone', Arial, sans-serif;
+            color: #000;
+        }
+
+        .content {
+            text-align: center;
+        }
+
+        /* Размер шрифта h1: 25% от высоты экрана */
+        h1 {
+            font-size: 25vh; /* Высота шрифта h1 будет 25% от высоты экрана */
+            margin: 0;
+            text-indent: 0pt;
+            line-height: 1.05; /* Меньше расстояние между "AVP" и следующим текстом */
+        }
+
+        /* Размер шрифта h2: 1/5 от h1 */
+        h2 {
+            font-size: calc(25vh / 5); /* Размер h2 1/5 от h1 */
+            margin: 0;
+            text-indent: 0pt;
+            line-height: 1.05; /* Меньше расстояние */
+        }
+
+        /* Размер шрифта p и a: 1/8 от h1 */
+        p {
+            font-size: calc(25vh / 8); /* Размер p 1/8 от h1 */
+            margin: 10px 0;
+            line-height: 1.05;
+            text-indent: 0pt;
+        }
+
+        a {
+            font-size: calc(25vh / 8); /* Размер ссылок 1/8 от h1 */
+            color: #000;
+            text-decoration: none;
+            font-weight: bold;
+            text-indent: 0pt;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        p a {
+            padding-left: 9pt; /* Отступ слева для <a> внутри <p> */
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <h1>AVP</h1>
+        <h2>Architecture & Design</h2>
+        <p>Steinenvorstadt 36 / Basel / Switzerland</p>
+        <p><a href="mailto:info@a-v-p.global">INFO@A-V-P.GLOBAL</a></p>
+    </div>
+</body>
+</html>
