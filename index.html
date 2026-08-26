@@ -108,6 +108,8 @@
             hoverKey: "",
             boxes: {}
         };
+        const measureCache = new Map();
+        let pendingLayoutFrame = 0;
 
         const russianTimeZones = new Set([
             "Europe/Kaliningrad",
@@ -149,6 +151,13 @@
         }
 
         function measureInk(text, fontValue) {
+            const cacheKey = `${fontValue}|||${text}`;
+            const cached = measureCache.get(cacheKey);
+
+            if (cached) {
+                return cached;
+            }
+
             const canvas = document.createElement("canvas");
             const context = canvas.getContext("2d");
             const padding = 80;
@@ -189,20 +198,26 @@
             }
 
             if (maxX < minX || maxY < minY) {
-                return {
+                const emptyMetrics = {
                     width: textWidth,
                     height: fontSize,
                     xOffset: padding,
                     yOffset: baseline
                 };
+
+                measureCache.set(cacheKey, emptyMetrics);
+                return emptyMetrics;
             }
 
-            return {
+            const metrics = {
                 width: maxX - minX + 1,
                 height: maxY - minY + 1,
                 xOffset: padding - minX,
                 yOffset: baseline - minY
             };
+
+            measureCache.set(cacheKey, metrics);
+            return metrics;
         }
 
         function alignmentText(key, text) {
@@ -577,7 +592,15 @@
             }
 
             state.hoverKey = key;
-            layout();
+
+            if (pendingLayoutFrame) {
+                return;
+            }
+
+            pendingLayoutFrame = requestAnimationFrame(() => {
+                pendingLayoutFrame = 0;
+                layout();
+            });
         }
 
         function bindHover() {
