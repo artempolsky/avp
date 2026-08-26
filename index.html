@@ -7,78 +7,633 @@
     <link rel="icon" type="image/png" href="favicon.png">
     <style>
         @font-face {
-            font-family: 'AyarKasone';
-            src: url('ayar_kasone.ttf') format('truetype');
-            font-weight: normal;
+            font-family: "Neue Haas Display";
+            src: url("fonts/Neue%20Haas%20Grotesk%20Display%20Pro%2065%20Medium.ttf") format("truetype");
+            font-weight: 500 900;
             font-style: normal;
+            font-display: swap;
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            text-indent: 0;
-            text-transform: uppercase; /* Все элементы в верхнем регистре */
+        }
+
+        html,
+        body {
+            width: 100%;
+            min-height: 100%;
         }
 
         body {
-            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+            background: #010b13;
+            font-family: "Neue Haas Display", Arial, Helvetica, sans-serif;
+        }
+
+        .stage {
+            position: relative;
+            width: 100vw;
             height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(45deg, #ff7e00, #ff003c);
-            font-family: 'AyarKasone', Arial, sans-serif;
-            color: #000;
         }
 
-        .content {
-            text-align: center;
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
         }
 
-        h1 {
-            font-size: 25vh;
-            margin: 0;
-            text-indent: 0pt;
-            line-height: 1.05;
-        }
-
-        h2 {
-            font-size: calc(25vh / 5);
-            margin: 0;
-            text-indent: 0pt;
-            line-height: 1.05;
-        }
-
-        p {
-            font-size: calc(25vh / 8);
-            margin: 10px 0;
-            line-height: 1.05;
-            text-indent: 0pt;
-        }
-
-        a {
-            font-size: calc(25vh / 8);
-            color: #000;
+        .hotspot {
+            position: absolute;
+            display: block;
+            overflow: hidden;
+            color: transparent;
             text-decoration: none;
-            font-weight: bold;
-            text-indent: 0pt;
+            white-space: nowrap;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 2;
         }
 
-        a:hover {
-            text-decoration: underline;
-        }
-
-        p a {
-            padding-left: 9pt;
+        .hotspot:hover,
+        .hotspot:focus-visible {
+            color: transparent;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-    <div class="content">
-        <h1>AVP</h1>
-        <h2>Architecture & Design</h2>
-        <p>Steinenvorstadt 36 / Basel / Switzerland</p>
-        <p><a href="mailto:info@a-v-p.global">INFO@A-V-P.GLOBAL</a></p>
-    </div>
+    <main class="stage" aria-label="AVP contact information">
+        <canvas id="layout"></canvas>
+        <a class="hotspot address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
+        <a class="hotspot phone-link" href="tel:+41762363780" aria-label="+41 76 236 37 80">+41 76 236 37 80</a>
+        <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="Info@a-v-p.global">Info@a-v-p.global</a>
+    </main>
+
+    <script>
+        const fallbackContent = {
+            en: {
+                pageTitle: "AVP",
+                ariaLabel: "AVP contact information",
+                logo: "AVP",
+                title: "Architecture & Design",
+                address: "Steinenvorstadt 36 / Basel / Switzerland",
+                addressHrefGoogle: "https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
+                addressHrefYandex: "https://yandex.ru/maps/?text=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
+                phoneText: "+41 76 236 37 80",
+                phoneHref: "tel:+41762363780",
+                emailText: "Info@a-v-p.global",
+                emailHref: "mailto:info@a-v-p.global"
+            },
+            ru: {
+                pageTitle: "AVP",
+                ariaLabel: "AVP contact information",
+                logo: "AVP",
+                title: "Architecture & Design",
+                address: "Steinenvorstadt 36 / Basel / Switzerland",
+                addressHrefGoogle: "https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
+                addressHrefYandex: "https://yandex.ru/maps/?text=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
+                phoneText: "+41 76 236 37 80",
+                phoneHref: "tel:+41762363780",
+                emailText: "Info@a-v-p.global",
+                emailHref: "mailto:info@a-v-p.global"
+            }
+        };
+
+        const state = {
+            content: fallbackContent,
+            locale: "en",
+            hoverKey: "",
+            boxes: {}
+        };
+
+        const russianTimeZones = new Set([
+            "Europe/Kaliningrad",
+            "Europe/Moscow",
+            "Europe/Samara",
+            "Asia/Yekaterinburg",
+            "Asia/Omsk",
+            "Asia/Novosibirsk",
+            "Asia/Barnaul",
+            "Asia/Tomsk",
+            "Asia/Krasnoyarsk",
+            "Asia/Irkutsk",
+            "Asia/Chita",
+            "Asia/Yakutsk",
+            "Asia/Khandyga",
+            "Asia/Vladivostok",
+            "Asia/Ust-Nera",
+            "Asia/Magadan",
+            "Asia/Sakhalin",
+            "Asia/Srednekolymsk",
+            "Asia/Kamchatka",
+            "Asia/Anadyr"
+        ]);
+
+        function clamp(min, value, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function uppercase(value) {
+            return String(value || "").toLocaleUpperCase(state.locale);
+        }
+
+        function font(weight, size) {
+            const family = state.locale === "ru"
+                ? "\"Arial Black\", Arial, Helvetica, sans-serif"
+                : "\"Neue Haas Display\", Arial, Helvetica, sans-serif";
+
+            return `${weight} ${size}px ${family}`;
+        }
+
+        function measureInk(text, fontValue) {
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            const padding = 80;
+
+            context.font = fontValue;
+
+            const textWidth = Math.ceil(context.measureText(text).width);
+            const fontSize = Number(fontValue.match(/(\d+(?:\.\d+)?)px/)?.[1] || 100);
+            const width = Math.max(1, textWidth + padding * 2);
+            const height = Math.max(1, Math.ceil(fontSize * 3));
+            const baseline = Math.ceil(fontSize * 1.6);
+
+            canvas.width = width;
+            canvas.height = height;
+
+            context.font = fontValue;
+            context.textBaseline = "alphabetic";
+            context.fillStyle = "#fff";
+            context.fillText(text, padding, baseline);
+
+            const pixels = context.getImageData(0, 0, width, height).data;
+            let minX = width;
+            let minY = height;
+            let maxX = -1;
+            let maxY = -1;
+
+            for (let y = 0; y < height; y += 1) {
+                for (let x = 0; x < width; x += 1) {
+                    const alpha = pixels[(y * width + x) * 4 + 3];
+
+                    if (alpha > 0) {
+                        minX = Math.min(minX, x);
+                        minY = Math.min(minY, y);
+                        maxX = Math.max(maxX, x);
+                        maxY = Math.max(maxY, y);
+                    }
+                }
+            }
+
+            if (maxX < minX || maxY < minY) {
+                return {
+                    width: textWidth,
+                    height: fontSize,
+                    xOffset: padding,
+                    yOffset: baseline
+                };
+            }
+
+            return {
+                width: maxX - minX + 1,
+                height: maxY - minY + 1,
+                xOffset: padding - minX,
+                yOffset: baseline - minY
+            };
+        }
+
+        function alignmentText(key, text) {
+            if (key === "email") {
+                return text.replace(/@/g, "O");
+            }
+
+            return text;
+        }
+
+        async function getCountryCode() {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 1500);
+
+            try {
+                const response = await fetch("https://ipapi.co/country/", {
+                    cache: "no-store",
+                    signal: controller.signal
+                });
+
+                if (!response.ok) {
+                    return "";
+                }
+
+                return (await response.text()).trim().toUpperCase();
+            } catch {
+                return "";
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+
+        function requestedLocale() {
+            const locale = new URLSearchParams(window.location.search).get("locale");
+
+            return ["en", "ru"].includes(locale) ? locale : "";
+        }
+
+        function fallbackLocale() {
+            const languages = navigator.languages || [navigator.language || ""];
+            const hasRussianLanguage = languages.some((language) => {
+                return language.toLowerCase().startsWith("ru");
+            });
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            return hasRussianLanguage || russianTimeZones.has(timeZone) ? "ru" : "en";
+        }
+
+        async function getLocale() {
+            const forcedLocale = requestedLocale();
+
+            if (forcedLocale) {
+                return forcedLocale;
+            }
+
+            const countryCode = await getCountryCode();
+
+            if (countryCode === "RU") {
+                return "ru";
+            }
+
+            if (countryCode) {
+                return "en";
+            }
+
+            return fallbackLocale();
+        }
+
+        function parseContentFile(text) {
+            const content = {};
+            let locale = "";
+
+            text.split(/\r?\n/).forEach((rawLine) => {
+                const line = rawLine.trim().replace(/^\uFEFF/, "");
+
+                if (!line || line.startsWith("#")) {
+                    return;
+                }
+
+                const section = line.match(/^\[([a-z]{2})\]$/i);
+
+                if (section) {
+                    locale = section[1].toLowerCase();
+                    content[locale] = content[locale] || {};
+                    return;
+                }
+
+                if (!locale) {
+                    return;
+                }
+
+                const separatorIndex = line.indexOf("=");
+
+                if (separatorIndex === -1) {
+                    return;
+                }
+
+                const key = line.slice(0, separatorIndex).trim();
+                const value = line.slice(separatorIndex + 1).trim();
+
+                content[locale][key] = value;
+            });
+
+            return content;
+        }
+
+        async function getContent() {
+            try {
+                const response = await fetch("content.txt", {
+                    cache: "no-store"
+                });
+
+                if (!response.ok) {
+                    return fallbackContent;
+                }
+
+                return parseContentFile(await response.text());
+            } catch {
+                return fallbackContent;
+            }
+        }
+
+        function currentCopy() {
+            return state.content[state.locale] || state.content.en;
+        }
+
+        function applyContent(locale) {
+            const copy = state.content[locale] || state.content.en;
+            const stage = document.querySelector(".stage");
+            const addressLink = document.querySelector(".address-link");
+            const phoneLink = document.querySelector(".phone-link");
+            const emailLink = document.querySelector(".email-link");
+            const addressHref = locale === "ru" ? copy.addressHrefYandex : copy.addressHrefGoogle;
+
+            state.locale = locale;
+            document.documentElement.lang = locale;
+            document.title = copy.pageTitle;
+            stage.setAttribute("aria-label", copy.ariaLabel);
+
+            addressLink.href = addressHref;
+            addressLink.textContent = copy.address;
+            addressLink.setAttribute("aria-label", copy.address);
+
+            phoneLink.href = copy.phoneHref;
+            phoneLink.textContent = copy.phoneText;
+            phoneLink.setAttribute("aria-label", copy.phoneText);
+
+            emailLink.href = copy.emailHref;
+            emailLink.textContent = copy.emailText;
+            emailLink.setAttribute("aria-label", copy.emailText);
+        }
+
+        function debugHoverKey() {
+            const key = new URLSearchParams(window.location.search).get("hover");
+
+            return ["address", "phone", "email"].includes(key) ? key : "";
+        }
+
+        function placeHotspot(selector, box) {
+            const element = document.querySelector(selector);
+
+            element.style.left = `${box.left}px`;
+            element.style.top = `${box.top}px`;
+            element.style.width = `${box.width}px`;
+            element.style.height = `${box.height}px`;
+            element.style.pointerEvents = "auto";
+        }
+
+        function drawText(context, line, left, top) {
+            const topBleed = line.topBleed || 0;
+
+            context.font = line.font;
+            context.textBaseline = "alphabetic";
+            context.fillStyle = state.hoverKey === line.key ? "#ffffff" : "#c0c0c0";
+            context.fillText(line.text, left + line.metrics.xOffset, top + line.metrics.yOffset);
+
+            if (topBleed) {
+                context.fillText(line.text, left + line.metrics.xOffset, top + line.metrics.yOffset - topBleed);
+            }
+
+            return {
+                left,
+                top: top - topBleed,
+                width: line.metrics.width,
+                height: line.metrics.height + topBleed
+            };
+        }
+
+        function layout() {
+            const canvas = document.querySelector("#layout");
+            const context = canvas.getContext("2d");
+            const scale = window.devicePixelRatio || 1;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            const rasterTouchCorrection = 3.67;
+            const lineGap = state.locale === "ru" ? 25 : -rasterTouchCorrection;
+            const blockGap = state.locale === "ru" ? 25 : 0;
+            const copy = currentCopy();
+            const logoLine = {
+                key: "logo",
+                text: uppercase(copy.logo),
+                weight: 900
+            };
+            const detailLines = [
+                {
+                    key: "title",
+                    text: uppercase(copy.title),
+                    weight: 500
+                },
+                {
+                    key: "address",
+                    text: uppercase(copy.address),
+                    weight: 500
+                },
+                {
+                    key: "phone",
+                    text: uppercase(copy.phoneText),
+                    weight: 500
+                },
+                {
+                    key: "email",
+                    text: uppercase(copy.emailText),
+                    weight: 500
+                }
+            ];
+
+            const logoBaseMetrics = measureInk(logoLine.text, font(logoLine.weight, 100));
+            const spacingTotal = lineGap * (detailLines.length - 1);
+            const detailBaseMetrics = detailLines.map((line) => {
+                return measureInk(line.text, font(line.weight, 100));
+            });
+            function buildBlocks(logoWidthTarget) {
+                const logoSize = (100 * logoWidthTarget) / logoBaseMetrics.width;
+                const logo = {
+                    ...logoLine,
+                    font: font(logoLine.weight, logoSize),
+                    metrics: measureInk(logoLine.text, font(logoLine.weight, logoSize))
+                };
+                const sideMargin = Math.round(logo.metrics.height / 2);
+                const logoLeft = sideMargin;
+                const detailLeft = logoLeft + logo.metrics.width + blockGap;
+                const detailWidth = Math.max(1, width - detailLeft - sideMargin - 1);
+                const detailLinesWithSize = detailLines.map((line, index) => {
+                    const baseMetrics = detailBaseMetrics[index];
+                    const size = (100 * detailWidth) / baseMetrics.width;
+                    const lineFont = font(line.weight, size);
+
+                    return {
+                        key: line.key,
+                        text: line.text,
+                        weight: line.weight,
+                        font: lineFont,
+                        metrics: measureInk(line.text, lineFont),
+                        alignMetrics: measureInk(alignmentText(line.key, line.text), lineFont)
+                    };
+                });
+                const detailHeight = detailLinesWithSize.reduce((sum, line) => {
+                    return sum + line.alignMetrics.height;
+                }, 0) + spacingTotal;
+
+                return {
+                    logo,
+                    logoLeft,
+                    sideMargin,
+                    detailLeft,
+                    detailLinesWithSize,
+                    detailHeight,
+                    delta: logo.metrics.height - detailHeight
+                };
+            }
+
+            let low = width * 0.2;
+            let high = width * 0.8;
+            let blocks = buildBlocks(width * 0.4);
+
+            for (let index = 0; index < 24; index += 1) {
+                const candidate = (low + high) / 2;
+                const candidateBlocks = buildBlocks(candidate);
+
+                if (Math.abs(candidateBlocks.delta) < Math.abs(blocks.delta)) {
+                    blocks = candidateBlocks;
+                }
+
+                if (candidateBlocks.delta < 0) {
+                    low = candidate;
+                } else {
+                    high = candidate;
+                }
+            }
+
+            if (blocks.delta < 0) {
+                const startWidth = (low + high) / 2;
+
+                for (let extra = 1; extra <= 80; extra += 1) {
+                    const correctedBlocks = buildBlocks(startWidth + extra);
+
+                    if (Math.abs(correctedBlocks.delta) < Math.abs(blocks.delta)) {
+                        blocks = correctedBlocks;
+                    }
+
+                    if (correctedBlocks.delta === 0) {
+                        blocks = correctedBlocks;
+                        break;
+                    }
+                }
+            }
+
+            const { logo, logoLeft, detailLeft, detailLinesWithSize, detailHeight } = blocks;
+
+            const blockHeight = Math.max(logo.metrics.height, detailHeight);
+
+            canvas.width = Math.floor(width * scale);
+            canvas.height = Math.floor(height * scale);
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            context.setTransform(scale, 0, 0, scale, 0, 0);
+            context.clearRect(0, 0, width, height);
+
+            let top = Math.round(Math.max(0, (height - blockHeight) / 2));
+            const boxes = {};
+            const debugPart = new URLSearchParams(window.location.search).get("debug");
+            const shouldDrawLogo = !debugPart || debugPart === "logo";
+            const shouldDrawDetails = !debugPart || debugPart === "details" || debugPart === "details-align";
+            const logoBox = shouldDrawLogo
+                ? drawText(context, logo, logoLeft, top)
+                : {
+                    left: logoLeft,
+                    top,
+                    width: logo.metrics.width,
+                    height: logo.metrics.height
+                };
+
+            boxes.logo = logoBox;
+
+            let detailTop = top;
+
+            detailLinesWithSize.forEach((line) => {
+                const drawLine = debugPart === "details-align"
+                    ? {
+                        ...line,
+                        text: alignmentText(line.key, line.text),
+                        metrics: line.alignMetrics
+                    }
+                    : line;
+                const box = shouldDrawDetails
+                    ? drawText(context, drawLine, detailLeft, detailTop)
+                    : {
+                        left: detailLeft,
+                        top: detailTop,
+                        width: drawLine.metrics.width,
+                        height: drawLine.metrics.height
+                    };
+
+                boxes[line.key] = box;
+                detailTop += line.alignMetrics.height + lineGap;
+            });
+
+            state.boxes = boxes;
+            placeHotspot(".phone-link", boxes.phone);
+            placeHotspot(".email-link", boxes.email);
+            placeHotspot(".address-link", boxes.address);
+        }
+
+        function boxContains(box, x, y) {
+            return x >= box.left && x <= box.left + box.width && y >= box.top && y <= box.top + box.height;
+        }
+
+        function setHoverKey(key) {
+            if (state.hoverKey === key) {
+                return;
+            }
+
+            state.hoverKey = key;
+            layout();
+        }
+
+        function bindHover() {
+            const stage = document.querySelector(".stage");
+            const phoneLink = document.querySelector(".phone-link");
+            const emailLink = document.querySelector(".email-link");
+            const addressLink = document.querySelector(".address-link");
+
+            stage.addEventListener("mousemove", (event) => {
+                const x = event.clientX;
+                const y = event.clientY;
+                const hovered = ["address", "phone", "email"].find((key) => {
+                    const box = state.boxes[key];
+
+                    if (!box) {
+                        return false;
+                    }
+
+                    return boxContains(box, x, y);
+                });
+
+                setHoverKey(hovered || "");
+            });
+            stage.addEventListener("mouseleave", () => setHoverKey(""));
+            [
+                [addressLink, "address"],
+                [phoneLink, "phone"],
+                [emailLink, "email"]
+            ].forEach(([element, key]) => {
+                element.addEventListener("mouseenter", () => setHoverKey(key));
+                element.addEventListener("mousemove", () => setHoverKey(key));
+                element.addEventListener("focus", () => setHoverKey(key));
+                element.addEventListener("mouseleave", () => setHoverKey(""));
+                element.addEventListener("blur", () => setHoverKey(""));
+            });
+        }
+
+        async function init() {
+            state.content = await getContent();
+
+            applyContent("en");
+            state.hoverKey = debugHoverKey();
+            await document.fonts.ready;
+            layout();
+            bindHover();
+            window.addEventListener("resize", layout);
+
+            const locale = await getLocale();
+
+            if (locale !== "en") {
+                applyContent(locale);
+                layout();
+            }
+        }
+
+        init();
+    </script>
 </body>
 </html>
