@@ -221,11 +221,10 @@
         }
 
         function alignmentText(key, text) {
-            if (key === "email") {
-                return text.replace(/@/g, "O");
-            }
-
-            return text;
+            return text
+                .replace(/@/g, "O")
+                .replace(/Й/g, "И")
+                .replace(/й/g, "и");
         }
 
         async function getCountryCode() {
@@ -388,19 +387,21 @@
 
         function drawText(context, line, left, top) {
             const topBleed = line.topBleed || 0;
+            const visualMetrics = line.alignMetrics || line.metrics;
+            const textTop = top + visualMetrics.yOffset - line.metrics.yOffset;
 
             context.font = line.font;
             context.textBaseline = "alphabetic";
             context.fillStyle = state.hoverKey === line.key ? "#ffffff" : "#c0c0c0";
-            context.fillText(line.text, left + line.metrics.xOffset, top + line.metrics.yOffset);
+            context.fillText(line.text, left + line.metrics.xOffset, top + visualMetrics.yOffset);
 
             if (topBleed) {
-                context.fillText(line.text, left + line.metrics.xOffset, top + line.metrics.yOffset - topBleed);
+                context.fillText(line.text, left + line.metrics.xOffset, top + visualMetrics.yOffset - topBleed);
             }
 
             return {
                 left,
-                top: top - topBleed,
+                top: textTop - topBleed,
                 width: line.metrics.width,
                 height: line.metrics.height + topBleed
             };
