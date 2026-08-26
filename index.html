@@ -29,7 +29,7 @@
         body {
             min-height: 100vh;
             overflow: hidden;
-            background: #010b13;
+            background: #ffffff;
             font-family: "Neue Haas Display", Arial, Helvetica, sans-serif;
         }
 
@@ -392,7 +392,7 @@
 
             context.font = line.font;
             context.textBaseline = "alphabetic";
-            context.fillStyle = state.hoverKey === line.key ? "#ffffff" : "#c0c0c0";
+            context.fillStyle = state.hoverKey === line.key ? "#555555" : "#000000";
             context.fillText(line.text, left + line.metrics.xOffset, top + visualMetrics.yOffset);
 
             if (topBleed) {
