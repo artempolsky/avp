@@ -17,5 +17,7 @@ title = Архитектура и дизайн
 address = Мичурина 37а, Новосибирск, Россия
 addressHrefGoogle = https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland
 addressHrefYandex = https://yandex.ru/maps/?text=%D0%9C%D0%B8%D1%87%D1%83%D1%80%D0%B8%D0%BD%D0%B0%2037%D0%B0%2C%20%D0%9D%D0%BE%D0%B2%D0%BE%D1%81%D0%B8%D0%B1%D0%B8%D1%80%D1%81%D0%BA%2C%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F
+phoneText = +7 915 288 31 83
+phoneHref = tel:+79152883183
 emailText = info@a-v-p.global
 emailHref = mailto:info@a-v-p.global

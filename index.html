@@ -76,6 +76,16 @@
             cursor: pointer;
         }
 
+        .phone-separator,
+        .phone-link {
+            display: none;
+        }
+
+        html[lang="ru"] .phone-separator,
+        html[lang="ru"] .phone-link {
+            display: inline;
+        }
+
         .hotspot:hover,
         .hotspot:focus-visible {
             color: #777777;
@@ -90,6 +100,8 @@
             <a class="hotspot contact-line address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
             <div class="contact-row">
                 <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="info@a-v-p.global">info@a-v-p.global</a>
+                <span class="phone-separator"> </span>
+                <a class="hotspot phone-link" href="tel:+79152883183" aria-label="+7 915 288 31 83">+7 915 288 31 83</a>
             </div>
         </div>
     </main>
@@ -115,6 +127,8 @@
                 address: "Мичурина 37а, Новосибирск, Россия",
                 addressHrefGoogle: "https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
                 addressHrefYandex: "https://yandex.ru/maps/?text=%D0%9C%D0%B8%D1%87%D1%83%D1%80%D0%B8%D0%BD%D0%B0%2037%D0%B0%2C%20%D0%9D%D0%BE%D0%B2%D0%BE%D1%81%D0%B8%D0%B1%D0%B8%D1%80%D1%81%D0%BA%2C%20%D0%A0%D0%BE%D1%81%D1%81%D0%B8%D1%8F",
+                phoneText: "+7 915 288 31 83",
+                phoneHref: "tel:+79152883183",
                 emailText: "info@a-v-p.global",
                 emailHref: "mailto:info@a-v-p.global"
             }
@@ -364,6 +378,7 @@
             const stage = document.querySelector(".stage");
             const titleLine = document.querySelector(".title-line");
             const addressLink = document.querySelector(".address-link");
+            const phoneLink = document.querySelector(".phone-link");
             const emailLink = document.querySelector(".email-link");
             const addressHref = locale === "ru" ? copy.addressHrefYandex : copy.addressHrefGoogle;
 
@@ -380,12 +395,18 @@
             emailLink.href = copy.emailHref;
             emailLink.textContent = copy.emailText;
             emailLink.setAttribute("aria-label", copy.emailText);
+
+            if (copy.phoneText && copy.phoneHref) {
+                phoneLink.href = copy.phoneHref;
+                phoneLink.textContent = copy.phoneText;
+                phoneLink.setAttribute("aria-label", copy.phoneText);
+            }
         }
 
         function debugHoverKey() {
             const key = new URLSearchParams(window.location.search).get("hover");
 
-            return ["address", "email"].includes(key) ? key : "";
+            return ["address", "phone", "email"].includes(key) ? key : "";
         }
 
         function placeHotspot(selector, box) {
