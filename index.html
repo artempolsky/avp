@@ -86,7 +86,7 @@
 <body>
     <main class="stage" aria-label="AVP contact information">
         <div class="contact-copy">
-            <div class="contact-line title-line">AVP—Architecture &amp; Design</div>
+            <div class="contact-line title-line">AVP: Architecture &amp; Design</div>
             <a class="hotspot contact-line address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
             <div class="contact-row">
                 <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="info@a-v-p.global">info@a-v-p.global</a>
@@ -378,7 +378,7 @@
             document.documentElement.lang = locale;
             document.title = copy.pageTitle;
             stage.setAttribute("aria-label", copy.ariaLabel);
-            titleLine.textContent = `${copy.logo}—${copy.title}`;
+            titleLine.textContent = `${copy.logo}: ${copy.title}`;
 
             addressLink.href = addressHref;
             addressLink.textContent = copy.address;
