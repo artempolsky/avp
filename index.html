@@ -30,46 +30,57 @@
             min-height: 100vh;
             overflow: hidden;
             background: #000000;
+            color: #ffffff;
             font-family: "Neue Haas Display", Arial, Helvetica, sans-serif;
         }
 
         .stage {
-            position: relative;
+            display: flex;
+            align-items: center;
             width: 100vw;
             height: 100vh;
         }
 
-        canvas {
+        .contact-copy {
+            width: calc(100vw - max(48px, 5vw));
+            margin-left: max(24px, 2.5vw);
+            font-weight: 900;
+            font-size: 128px;
+            line-height: normal;
+            letter-spacing: 0;
+            color: #ffffff;
+        }
+
+        .contact-line,
+        .contact-row {
             display: block;
-            width: 100%;
-            height: 100%;
+            white-space: nowrap;
         }
 
         .hotspot {
-            position: absolute;
-            display: block;
-            overflow: hidden;
-            color: transparent;
+            color: inherit;
             text-decoration: none;
-            white-space: nowrap;
-            pointer-events: auto;
             cursor: pointer;
-            z-index: 2;
         }
 
         .hotspot:hover,
         .hotspot:focus-visible {
-            color: transparent;
+            color: #777777;
             text-decoration: none;
         }
     </style>
 </head>
 <body>
     <main class="stage" aria-label="AVP contact information">
-        <canvas id="layout"></canvas>
-        <a class="hotspot address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
-        <a class="hotspot phone-link" href="tel:+41762363780" aria-label="+41 76 236 37 80">+41 76 236 37 80</a>
-        <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="info@a-v-p.global">info@a-v-p.global</a>
+        <div class="contact-copy">
+            <div class="contact-line title-line">AVP—Architecture &amp; Design</div>
+            <a class="hotspot contact-line address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
+            <div class="contact-row">
+                <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="info@a-v-p.global">info@a-v-p.global</a>
+                <span> </span>
+                <a class="hotspot phone-link" href="tel:+41762363780" aria-label="+41 76 236 37 80">+41 76 236 37 80</a>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -344,6 +355,7 @@
         function applyContent(locale) {
             const copy = state.content[locale] || state.content.en;
             const stage = document.querySelector(".stage");
+            const titleLine = document.querySelector(".title-line");
             const addressLink = document.querySelector(".address-link");
             const phoneLink = document.querySelector(".phone-link");
             const emailLink = document.querySelector(".email-link");
@@ -353,6 +365,7 @@
             document.documentElement.lang = locale;
             document.title = copy.pageTitle;
             stage.setAttribute("aria-label", copy.ariaLabel);
+            titleLine.textContent = `${copy.logo}—${copy.title}`;
 
             addressLink.href = addressHref;
             addressLink.textContent = copy.address;
@@ -406,121 +419,26 @@
         }
 
         function layout() {
-            const canvas = document.querySelector("#layout");
-            const context = canvas.getContext("2d");
-            const scale = window.devicePixelRatio || 1;
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            const copy = currentCopy();
-            const contactGapBaseWidth = 18;
-            const lines = [
-                {
-                    key: "title",
-                    text: `${copy.logo} — ${copy.title}`,
-                    weight: 900
-                },
-                {
-                    key: "address",
-                    text: copy.address,
-                    weight: 900
-                },
-                {
-                    key: "email",
-                    text: copy.emailText,
-                    weight: 900
+            const copy = document.querySelector(".contact-copy");
+            const stage = document.querySelector(".stage");
+            const maxWidth = copy.clientWidth * (window.innerWidth < 700 ? 0.72 : 1);
+            const maxHeight = stage.clientHeight;
+            let low = 10;
+            let high = 150;
+
+            for (let index = 0; index < 24; index += 1) {
+                const size = (low + high) / 2;
+
+                copy.style.fontSize = `${size}px`;
+
+                if (copy.scrollWidth <= maxWidth && copy.scrollHeight <= maxHeight) {
+                    low = size;
+                } else {
+                    high = size;
                 }
-            ];
-            const phoneLine = {
-                key: "phone",
-                text: copy.phoneText,
-                weight: 900
-            };
+            }
 
-            const baseFont = font(900, 100);
-            const baseMetrics = lines.map((line) => {
-                return measureInk(line.text, baseFont);
-            });
-            const phoneBaseMetrics = measureInk(phoneLine.text, baseFont);
-            const contactBaseWidth = baseMetrics[2].width + contactGapBaseWidth + phoneBaseMetrics.width;
-            const maxBaseWidth = Math.max(baseMetrics[0].width, baseMetrics[1].width, contactBaseWidth);
-            const sideMargin = Math.max(24, Math.round(width * 0.025));
-            const maxTextWidth = Math.max(1, width - sideMargin * 2);
-            const widthSize = (100 * maxTextWidth) / maxBaseWidth;
-            const fitSize = width < 700 ? widthSize * 0.42 : widthSize;
-            const viewportSize = clamp(10, Math.min(fitSize, height * 0.14), 128);
-            const lineFont = font(900, viewportSize);
-            const lineGap = Math.round(viewportSize * 0.08);
-            const drawLines = lines.map((line) => {
-                return {
-                    ...line,
-                    font: lineFont,
-                    metrics: measureInk(line.text, lineFont),
-                    alignMetrics: measureInk(alignmentText(line.key, line.text), lineFont)
-                };
-            });
-            const phone = {
-                ...phoneLine,
-                font: lineFont,
-                metrics: measureInk(phoneLine.text, lineFont),
-                alignMetrics: measureInk(alignmentText(phoneLine.key, phoneLine.text), lineFont)
-            };
-            const contactGapWidth = Math.round(viewportSize * 0.18);
-            const blockHeight = drawLines.reduce((sum, line) => {
-                return sum + line.alignMetrics.height;
-            }, 0) + lineGap * (drawLines.length - 1);
-
-            canvas.width = Math.floor(width * scale);
-            canvas.height = Math.floor(height * scale);
-            canvas.style.width = `${width}px`;
-            canvas.style.height = `${height}px`;
-
-            context.setTransform(scale, 0, 0, scale, 0, 0);
-            context.clearRect(0, 0, width, height);
-
-            const left = sideMargin;
-            let top = Math.round(Math.max(0, (height - blockHeight) / 2));
-            const boxes = {};
-            const debugPart = new URLSearchParams(window.location.search).get("debug");
-            const shouldDrawDetails = !debugPart || debugPart === "details" || debugPart === "details-align";
-
-            drawLines.forEach((line) => {
-                const drawLine = debugPart === "details-align"
-                    ? {
-                        ...line,
-                        text: alignmentText(line.key, line.text),
-                        metrics: line.alignMetrics
-                    }
-                    : line;
-                const box = shouldDrawDetails
-                    ? drawText(context, drawLine, left, top)
-                    : {
-                        left,
-                        top,
-                        width: drawLine.metrics.width,
-                        height: drawLine.metrics.height
-                    };
-
-                boxes[line.key] = box;
-
-                if (line.key === "email") {
-                    const phoneLeft = left + line.metrics.width + contactGapWidth;
-                    boxes.phone = shouldDrawDetails
-                        ? drawText(context, phone, phoneLeft, top)
-                        : {
-                            left: phoneLeft,
-                            top,
-                            width: phone.metrics.width,
-                            height: phone.metrics.height
-                        };
-                }
-
-                top += line.alignMetrics.height + lineGap;
-            });
-
-            state.boxes = boxes;
-            placeHotspot(".phone-link", boxes.phone);
-            placeHotspot(".email-link", boxes.email);
-            placeHotspot(".address-link", boxes.address);
+            copy.style.fontSize = `${Math.floor(low)}px`;
         }
 
         function boxContains(box, x, y) {
@@ -545,38 +463,7 @@
         }
 
         function bindHover() {
-            const stage = document.querySelector(".stage");
-            const phoneLink = document.querySelector(".phone-link");
-            const emailLink = document.querySelector(".email-link");
-            const addressLink = document.querySelector(".address-link");
-
-            stage.addEventListener("mousemove", (event) => {
-                const x = event.clientX;
-                const y = event.clientY;
-                const hovered = ["address", "phone", "email"].find((key) => {
-                    const box = state.boxes[key];
-
-                    if (!box) {
-                        return false;
-                    }
-
-                    return boxContains(box, x, y);
-                });
-
-                setHoverKey(hovered || "");
-            });
-            stage.addEventListener("mouseleave", () => setHoverKey(""));
-            [
-                [addressLink, "address"],
-                [phoneLink, "phone"],
-                [emailLink, "email"]
-            ].forEach(([element, key]) => {
-                element.addEventListener("mouseenter", () => setHoverKey(key));
-                element.addEventListener("mousemove", () => setHoverKey(key));
-                element.addEventListener("focus", () => setHoverKey(key));
-                element.addEventListener("mouseleave", () => setHoverKey(""));
-                element.addEventListener("blur", () => setHoverKey(""));
-            });
+            return;
         }
 
         async function init() {
