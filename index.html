@@ -29,7 +29,7 @@
         body {
             min-height: 100vh;
             overflow: hidden;
-            background: #ffffff;
+            background: #000000;
             font-family: "Neue Haas Display", Arial, Helvetica, sans-serif;
         }
 
@@ -69,7 +69,7 @@
         <canvas id="layout"></canvas>
         <a class="hotspot address-link" href="https://www.google.com/maps/search/?api=1&query=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland" aria-label="Steinenvorstadt 36 / Basel / Switzerland" target="_blank" rel="noopener">Steinenvorstadt 36 / Basel / Switzerland</a>
         <a class="hotspot phone-link" href="tel:+41762363780" aria-label="+41 76 236 37 80">+41 76 236 37 80</a>
-        <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="Info@a-v-p.global">Info@a-v-p.global</a>
+        <a class="hotspot email-link" href="mailto:info@a-v-p.global" aria-label="info@a-v-p.global">info@a-v-p.global</a>
     </main>
 
     <script>
@@ -84,7 +84,7 @@
                 addressHrefYandex: "https://yandex.ru/maps/?text=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
                 phoneText: "+41 76 236 37 80",
                 phoneHref: "tel:+41762363780",
-                emailText: "Info@a-v-p.global",
+                emailText: "info@a-v-p.global",
                 emailHref: "mailto:info@a-v-p.global"
             },
             ru: {
@@ -97,7 +97,7 @@
                 addressHrefYandex: "https://yandex.ru/maps/?text=Steinenvorstadt%2036%2C%20Basel%2C%20Switzerland",
                 phoneText: "+41 76 236 37 80",
                 phoneHref: "tel:+41762363780",
-                emailText: "Info@a-v-p.global",
+                emailText: "info@a-v-p.global",
                 emailHref: "mailto:info@a-v-p.global"
             }
         };
@@ -143,9 +143,7 @@
         }
 
         function font(weight, size) {
-            const family = state.locale === "ru"
-                ? "\"Arial Black\", Arial, Helvetica, sans-serif"
-                : "\"Neue Haas Display\", Arial, Helvetica, sans-serif";
+            const family = "\"Neue Haas Display\", Arial, Helvetica, sans-serif";
 
             return `${weight} ${size}px ${family}`;
         }
@@ -392,7 +390,7 @@
 
             context.font = line.font;
             context.textBaseline = "alphabetic";
-            context.fillStyle = state.hoverKey === line.key ? "#555555" : "#000000";
+            context.fillStyle = state.hoverKey === line.key ? "#777777" : "#ffffff";
             context.fillText(line.text, left + line.metrics.xOffset, top + visualMetrics.yOffset);
 
             if (topBleed) {
@@ -413,122 +411,63 @@
             const scale = window.devicePixelRatio || 1;
             const width = window.innerWidth;
             const height = window.innerHeight;
-            const rasterTouchCorrection = 3.67;
-            const lineGap = state.locale === "ru" ? 25 : -rasterTouchCorrection;
-            const blockGap = state.locale === "ru" ? 25 : 0;
             const copy = currentCopy();
-            const logoLine = {
-                key: "logo",
-                text: uppercase(copy.logo),
-                weight: 900
-            };
-            const detailLines = [
+            const contactGapBaseWidth = 18;
+            const lines = [
                 {
                     key: "title",
-                    text: uppercase(copy.title),
-                    weight: 500
+                    text: `${copy.logo} — ${copy.title}`,
+                    weight: 900
                 },
                 {
                     key: "address",
-                    text: uppercase(copy.address),
-                    weight: 500
-                },
-                {
-                    key: "phone",
-                    text: uppercase(copy.phoneText),
-                    weight: 500
+                    text: copy.address,
+                    weight: 900
                 },
                 {
                     key: "email",
-                    text: uppercase(copy.emailText),
-                    weight: 500
+                    text: copy.emailText,
+                    weight: 900
                 }
             ];
+            const phoneLine = {
+                key: "phone",
+                text: copy.phoneText,
+                weight: 900
+            };
 
-            const logoBaseMetrics = measureInk(logoLine.text, font(logoLine.weight, 100));
-            const spacingTotal = lineGap * (detailLines.length - 1);
-            const detailBaseMetrics = detailLines.map((line) => {
-                return measureInk(line.text, font(line.weight, 100));
+            const baseFont = font(900, 100);
+            const baseMetrics = lines.map((line) => {
+                return measureInk(line.text, baseFont);
             });
-            function buildBlocks(logoWidthTarget) {
-                const logoSize = (100 * logoWidthTarget) / logoBaseMetrics.width;
-                const logo = {
-                    ...logoLine,
-                    font: font(logoLine.weight, logoSize),
-                    metrics: measureInk(logoLine.text, font(logoLine.weight, logoSize))
-                };
-                const sideMargin = Math.round(logo.metrics.height / 2);
-                const logoLeft = sideMargin;
-                const detailLeft = logoLeft + logo.metrics.width + blockGap;
-                const detailWidth = Math.max(1, width - detailLeft - sideMargin - 1);
-                const detailLinesWithSize = detailLines.map((line, index) => {
-                    const baseMetrics = detailBaseMetrics[index];
-                    const size = (100 * detailWidth) / baseMetrics.width;
-                    const lineFont = font(line.weight, size);
-
-                    return {
-                        key: line.key,
-                        text: line.text,
-                        weight: line.weight,
-                        font: lineFont,
-                        metrics: measureInk(line.text, lineFont),
-                        alignMetrics: measureInk(alignmentText(line.key, line.text), lineFont)
-                    };
-                });
-                const detailHeight = detailLinesWithSize.reduce((sum, line) => {
-                    return sum + line.alignMetrics.height;
-                }, 0) + spacingTotal;
-
+            const phoneBaseMetrics = measureInk(phoneLine.text, baseFont);
+            const contactBaseWidth = baseMetrics[2].width + contactGapBaseWidth + phoneBaseMetrics.width;
+            const maxBaseWidth = Math.max(baseMetrics[0].width, baseMetrics[1].width, contactBaseWidth);
+            const sideMargin = Math.max(24, Math.round(width * 0.025));
+            const maxTextWidth = Math.max(1, width - sideMargin * 2);
+            const widthSize = (100 * maxTextWidth) / maxBaseWidth;
+            const fitSize = width < 700 ? widthSize * 0.42 : widthSize;
+            const viewportSize = clamp(10, Math.min(fitSize, height * 0.14), 128);
+            const lineFont = font(900, viewportSize);
+            const lineGap = Math.round(viewportSize * 0.08);
+            const drawLines = lines.map((line) => {
                 return {
-                    logo,
-                    logoLeft,
-                    sideMargin,
-                    detailLeft,
-                    detailLinesWithSize,
-                    detailHeight,
-                    delta: logo.metrics.height - detailHeight
+                    ...line,
+                    font: lineFont,
+                    metrics: measureInk(line.text, lineFont),
+                    alignMetrics: measureInk(alignmentText(line.key, line.text), lineFont)
                 };
-            }
-
-            let low = width * 0.2;
-            let high = width * 0.8;
-            let blocks = buildBlocks(width * 0.4);
-
-            for (let index = 0; index < 24; index += 1) {
-                const candidate = (low + high) / 2;
-                const candidateBlocks = buildBlocks(candidate);
-
-                if (Math.abs(candidateBlocks.delta) < Math.abs(blocks.delta)) {
-                    blocks = candidateBlocks;
-                }
-
-                if (candidateBlocks.delta < 0) {
-                    low = candidate;
-                } else {
-                    high = candidate;
-                }
-            }
-
-            if (blocks.delta < 0) {
-                const startWidth = (low + high) / 2;
-
-                for (let extra = 1; extra <= 80; extra += 1) {
-                    const correctedBlocks = buildBlocks(startWidth + extra);
-
-                    if (Math.abs(correctedBlocks.delta) < Math.abs(blocks.delta)) {
-                        blocks = correctedBlocks;
-                    }
-
-                    if (correctedBlocks.delta === 0) {
-                        blocks = correctedBlocks;
-                        break;
-                    }
-                }
-            }
-
-            const { logo, logoLeft, detailLeft, detailLinesWithSize, detailHeight } = blocks;
-
-            const blockHeight = Math.max(logo.metrics.height, detailHeight);
+            });
+            const phone = {
+                ...phoneLine,
+                font: lineFont,
+                metrics: measureInk(phoneLine.text, lineFont),
+                alignMetrics: measureInk(alignmentText(phoneLine.key, phoneLine.text), lineFont)
+            };
+            const contactGapWidth = Math.round(viewportSize * 0.18);
+            const blockHeight = drawLines.reduce((sum, line) => {
+                return sum + line.alignMetrics.height;
+            }, 0) + lineGap * (drawLines.length - 1);
 
             canvas.width = Math.floor(width * scale);
             canvas.height = Math.floor(height * scale);
@@ -538,25 +477,13 @@
             context.setTransform(scale, 0, 0, scale, 0, 0);
             context.clearRect(0, 0, width, height);
 
+            const left = sideMargin;
             let top = Math.round(Math.max(0, (height - blockHeight) / 2));
             const boxes = {};
             const debugPart = new URLSearchParams(window.location.search).get("debug");
-            const shouldDrawLogo = !debugPart || debugPart === "logo";
             const shouldDrawDetails = !debugPart || debugPart === "details" || debugPart === "details-align";
-            const logoBox = shouldDrawLogo
-                ? drawText(context, logo, logoLeft, top)
-                : {
-                    left: logoLeft,
-                    top,
-                    width: logo.metrics.width,
-                    height: logo.metrics.height
-                };
 
-            boxes.logo = logoBox;
-
-            let detailTop = top;
-
-            detailLinesWithSize.forEach((line) => {
+            drawLines.forEach((line) => {
                 const drawLine = debugPart === "details-align"
                     ? {
                         ...line,
@@ -565,16 +492,29 @@
                     }
                     : line;
                 const box = shouldDrawDetails
-                    ? drawText(context, drawLine, detailLeft, detailTop)
+                    ? drawText(context, drawLine, left, top)
                     : {
-                        left: detailLeft,
-                        top: detailTop,
+                        left,
+                        top,
                         width: drawLine.metrics.width,
                         height: drawLine.metrics.height
                     };
 
                 boxes[line.key] = box;
-                detailTop += line.alignMetrics.height + lineGap;
+
+                if (line.key === "email") {
+                    const phoneLeft = left + line.metrics.width + contactGapWidth;
+                    boxes.phone = shouldDrawDetails
+                        ? drawText(context, phone, phoneLeft, top)
+                        : {
+                            left: phoneLeft,
+                            top,
+                            width: phone.metrics.width,
+                            height: phone.metrics.height
+                        };
+                }
+
+                top += line.alignMetrics.height + lineGap;
             });
 
             state.boxes = boxes;
