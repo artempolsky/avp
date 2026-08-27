@@ -40,6 +40,11 @@
             background: #ffffff;
             color: #000000;
             font-family: "Neue Haas Display", Arial, Helvetica, sans-serif;
+            visibility: hidden;
+        }
+
+        html.is-ready body {
+            visibility: visible;
         }
 
         .stage {
@@ -142,29 +147,6 @@
         };
         const measureCache = new Map();
         let pendingLayoutFrame = 0;
-
-        const russianTimeZones = new Set([
-            "Europe/Kaliningrad",
-            "Europe/Moscow",
-            "Europe/Samara",
-            "Asia/Yekaterinburg",
-            "Asia/Omsk",
-            "Asia/Novosibirsk",
-            "Asia/Barnaul",
-            "Asia/Tomsk",
-            "Asia/Krasnoyarsk",
-            "Asia/Irkutsk",
-            "Asia/Chita",
-            "Asia/Yakutsk",
-            "Asia/Khandyga",
-            "Asia/Vladivostok",
-            "Asia/Ust-Nera",
-            "Asia/Magadan",
-            "Asia/Sakhalin",
-            "Asia/Srednekolymsk",
-            "Asia/Kamchatka",
-            "Asia/Anadyr"
-        ]);
 
         function clamp(min, value, max) {
             return Math.min(Math.max(value, min), max);
@@ -290,9 +272,8 @@
             const hasRussianLanguage = languages.some((language) => {
                 return language.toLowerCase().startsWith("ru");
             });
-            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-            return hasRussianLanguage || russianTimeZones.has(timeZone) ? "ru" : "en";
+            return hasRussianLanguage ? "ru" : "en";
         }
 
         async function getLocale() {
@@ -497,22 +478,19 @@
         }
 
         async function init() {
-            state.content = await getContent();
+            const [content, locale] = await Promise.all([
+                getContent(),
+                getLocale()
+            ]);
 
-            applyContent("en");
+            state.content = content;
+            applyContent(locale);
             state.hoverKey = debugHoverKey();
             await document.fonts.ready;
             layout();
             bindHover();
             window.addEventListener("resize", layout);
-
-            const locale = await getLocale();
-
-            if (locale !== "en") {
-                applyContent(locale);
-                await document.fonts.ready;
-                layout();
-            }
+            document.documentElement.classList.add("is-ready");
 
             document.fonts.addEventListener("loadingdone", layout);
         }
