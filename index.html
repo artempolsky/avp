@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AVP</title>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <link id="favicon" rel="icon" type="image/png" href="favicon.png">
     <style>
         @font-face {
             font-family: "Neue Haas Display";
@@ -373,6 +373,12 @@
             return state.content[state.locale] || state.content.en;
         }
 
+        function applyFavicon(locale) {
+            const favicon = document.querySelector("#favicon");
+
+            favicon.href = locale === "ru" ? "favicon-ru.png" : "favicon.png";
+        }
+
         function applyContent(locale) {
             const copy = state.content[locale] || state.content.en;
             const stage = document.querySelector(".stage");
@@ -385,6 +391,7 @@
             state.locale = locale;
             document.documentElement.lang = locale;
             document.title = copy.pageTitle;
+            applyFavicon(locale);
             stage.setAttribute("aria-label", copy.ariaLabel);
             titleLine.textContent = `${copy.logo}—${copy.title}`;
 
