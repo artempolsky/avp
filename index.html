@@ -493,8 +493,11 @@
 
             if (locale !== "en") {
                 applyContent(locale);
+                await document.fonts.ready;
                 layout();
             }
+
+            document.fonts.addEventListener("loadingdone", layout);
         }
 
         init();
